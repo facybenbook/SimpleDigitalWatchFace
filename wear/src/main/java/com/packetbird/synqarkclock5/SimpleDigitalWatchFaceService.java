@@ -191,9 +191,6 @@ public class SimpleDigitalWatchFaceService extends CanvasWatchFaceService {
         /**
          * 至る箇所からコールされるinvalidateに応じて適切なタイミングで走る。
          * 頻度はAmbientModeで毎分（onTimeTick）, アクティブ時でINTERACTIVE_UPDATE_RATE_MSミリ秒毎
-         *
-         * @param canvas
-         * @param bounds
          */
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
@@ -241,12 +238,6 @@ public class SimpleDigitalWatchFaceService extends CanvasWatchFaceService {
                 canvas.drawRect(0f, barOffset, barWidth, barMaxHeight * (float) (mDrawingBatteryLeftHandheld * 0.01), mTextLevelPaint);
                 canvas.drawRect(width - barWidth, barOffset, width, barMaxHeight  * (float) (mDrawingBatteryLeftWear * 0.01), mTextLevelPaint);
 
-                if(mTimePassedSinceActive < 20){
-                    float offset = (60-60/mTimePassedSinceActive);
-                    mTextLevelPaint.setAlpha(255-10*mTimePassedSinceActive);
-                    canvas.drawLine(offset,0f,offset,height,mTextLevelPaint);
-                    canvas.drawLine(width-offset,0f,width-offset,height,mTextLevelPaint);
-                }
             }else{
                 mDrawingBatteryLeftHandheld = 0;
                 mDrawingBatteryLeftWear = 0;
@@ -299,10 +290,7 @@ public class SimpleDigitalWatchFaceService extends CanvasWatchFaceService {
         }
 
         /**
-         * AmbientModeへの変更、あるいは復帰時にコールのはず
-         * TODO ↑の確証を得る
-         *
-         * @param inAmbientMode
+         * AmbientModeへの変更、あるいは復帰時にコール
          */
         @Override
         public void onAmbientModeChanged(boolean inAmbientMode) {
@@ -313,9 +301,10 @@ public class SimpleDigitalWatchFaceService extends CanvasWatchFaceService {
             if(inAmbientMode){
                 System.gc();
             }
+            /*
             if (mLowBitAmbient) {
                 //boolean antiAlias = !inAmbientMode;
-            }
+            }*/
             invalidate();
 
             updateTimer();
@@ -324,9 +313,6 @@ public class SimpleDigitalWatchFaceService extends CanvasWatchFaceService {
         /**
          * ミュートモードへ移行・復帰時にコール
          * ミュートモード時にはINTERRUPTION_FILTER_NONEと同じ値が帰る？
-         * TODO ほかに役目ある？
-         *
-         * @param interruptionFilter
          */
         @Override
         public void onInterruptionFilterChanged(int interruptionFilter) {
@@ -340,7 +326,6 @@ public class SimpleDigitalWatchFaceService extends CanvasWatchFaceService {
 
         /**
          * 可視性に変更があった場合にコールされる。
-         * @param visible
          */
         @Override
         public void onVisibilityChanged(boolean visible) {

@@ -13,14 +13,14 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
+import com.google.android.gms.wearable.WearableListenerService;
 
-/**
- * Created by synqark on 2014/12/15.
- */
-public class SimpleDigitalWatchDataTransferService extends Service {
+public class SimpleDigitalWatchDataTransferService extends WearableListenerService {
 
     final static String TAG = "SimpleDigitalWatchDataTransferService";
     private BroadcastReceiver mReceiver = null;
@@ -43,20 +43,24 @@ public class SimpleDigitalWatchDataTransferService extends Service {
     }
 
     @Override
-    public IBinder onBind(Intent intent) {
-        Log.d(TAG, "onBind");
-        return null;
-    }
-
-    @Override
     public void onCreate() {
         Log.d(TAG, "onCreate");
         super.onCreate();
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand");
+    public void onPeerConnected(Node peer) {
+        super.onPeerConnected(peer);
+        checkReceiverAndGoogleApiCLient();
+    }
+
+    public SimpleDigitalWatchDataTransferService() {
+        super();
+        checkReceiverAndGoogleApiCLient();
+    }
+
+    private void checkReceiverAndGoogleApiCLient(){
+
         if(mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addApi(Wearable.API)
@@ -79,29 +83,43 @@ public class SimpleDigitalWatchDataTransferService extends Service {
                     }).build();
             mGoogleApiClient.connect();
         }
-        if(mReceiver != null) unregisterReceiver(mReceiver);
-
-        mReceiver = new BroadcastReceiver(){
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if(intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)){
-                    mBatteryLeft = intent.getIntExtra("level",0);
-                    shareBatteryLeft();
+        if(mReceiver == null)
+        {
+            mReceiver = new BroadcastReceiver(){
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if(intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)){
+                        mBatteryLeft = intent.getIntExtra("level",0);
+                        shareBatteryLeft();
+                    }
                 }
-            }
-        };
+            };
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_BATTERY_CHANGED);
-        registerReceiver(mReceiver, filter);
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(Intent.ACTION_BATTERY_CHANGED);
+            registerReceiver(mReceiver, filter);
+        }
+    }
 
-        return START_STICKY;
+    @Override
+    public void onPeerDisconnected(Node peer) {
+        super.onPeerDisconnected(peer);
+        if(mReceiver != null) unregisterReceiver(mReceiver);
+        unregisterReceiver(mReceiver);
+        mReceiver = null;
+    }
+
+    @Override
+    public void onDataChanged(DataEventBuffer dataEvents) {
+        super.onDataChanged(dataEvents);
+        checkReceiverAndGoogleApiCLient();
     }
 
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
-        unregisterReceiver(mReceiver);
+        if(mReceiver != null) unregisterReceiver(mReceiver);
+        mReceiver = null;
         super.onDestroy();
     }
 }
