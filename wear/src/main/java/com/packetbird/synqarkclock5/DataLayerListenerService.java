@@ -19,10 +19,9 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
 public class DataLayerListenerService extends WearableListenerService {
-    private static final String TAG = "DataLayerListenerService";
+    private static String TAG = "BATTERY_LEFT_SPEAKER";
     final String BATT_PATH = "/BATT_PATH";
     final String BATT_LEFT = "left";
-    private GoogleApiClient mGoogleApiClient;
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
@@ -32,47 +31,13 @@ public class DataLayerListenerService extends WearableListenerService {
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {
         super.onDataChanged(dataEvents);
+        Log.d(TAG,"onDataChanged!!");
         for (DataEvent event : dataEvents) {
             DataItem dataItem = event.getDataItem();
             if (BATT_PATH.equals(dataItem.getUri().getPath())) {
                 DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
                 SimpleDigitalWatchFaceService.sBatteryLeftHandheld = dataMap.getInt(BATT_LEFT);
             }
-        }
-    }
-
-    int count = 0;
-
-    @Override
-    public void onPeerConnected(Node peer) {
-        super.onPeerConnected(peer);
-        checkGoogleApiClient();
-        PutDataMapRequest dataMap = PutDataMapRequest.create("/message");
-        dataMap.getDataMap().putInt("greetings", ++count);
-        PutDataRequest request = dataMap.asPutDataRequest();
-        PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
-                .putDataItem(mGoogleApiClient, request);
-    }
-
-    @Override
-    public void onPeerDisconnected(Node peer) {
-        super.onPeerDisconnected(peer);
-    }
-
-    private void checkGoogleApiClient() {
-        if(mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addApi(Wearable.API)
-                    .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks(){
-                        @Override
-                        public void onConnected(Bundle bundle) {
-                        }
-
-                        @Override
-                        public void onConnectionSuspended(int i) {
-                        }
-                    }).build();
-            mGoogleApiClient.connect();
         }
     }
 }
